@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Optimizer Workflow Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1920px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .status-value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+
+        main {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .workflow-container {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: auto;
+            position: relative;
+        }
+
+        #workflow-canvas {
+            min-height: 800px;
+            min-width: 1200px;
+        }
+
+        .sidebar {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .details-panel, .metrics-panel, .legend {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .details-panel {
+            flex: 1;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        #node-details {
+            font-size: 14px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .placeholder {
+            color: #999;
+            font-style: italic;
+        }
+
+        .metric {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #666;
+            flex: 1;
+        }
+
+        .metric-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            text-align: right;
+            min-width: 40px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+        }
+
+        .legend-color.input { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .legend-color.process { background: linear-gradient(135deg, #4CAF50, #45a049); }
+        .legend-color.decision { background: linear-gradient(135deg, #FFC107, #FFA000); }
+        .legend-color.api { background: linear-gradient(135deg, #2196F3, #1976D2); }
+        .legend-color.checklist { background: linear-gradient(135deg, #9C27B0, #7B1FA2); }
+
+        /* Voice Assistant Styles */
+        .voice-assistant-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .voice-assistant-panel h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .voice-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .voice-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .voice-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .voice-button.speaking {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            animation: pulse 1.5s infinite;
+        }
+
+        .voice-icon {
+            font-size: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: 500;
+            color: #555;
+            min-width: 130px;
+            text-align: left;
+        }
+
+        .control-group input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        #speed-value {
+            min-width: 45px;
+            font-weight: 600;
+            color: #667eea;
+            text-align: right;
+        }
+
+        .control-group select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .voice-status {
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .voice-status.active {
+            background: linear-gradient(135deg, #e3f2fd 0%, #e1f5fe 100%);
+            border: 1px solid #2196F3;
+        }
+
+        .voice-status.error {
+            background: #ffebee;
+            border: 1px solid #f44336;
+        }
+
+        .voice-status .status-text {
+            font-weight: 500;
+            color: #666;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .workflow-node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .workflow-node:hover {
+            filter: brightness(1.1);
+        }
+
+        .workflow-node.active {
+            filter: drop-shadow(0 0 20px rgba(76, 175, 80, 0.8));
+        }
+
+        .node-text {
+            fill: white;
+            font-size: 14px;
+            font-weight: 500;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            pointer-events: none;
+        }
+
+        .node-subtext {
+            fill: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            pointer-events: none;
+        }
+
+        .flow-line {
+            stroke: #999;
+            stroke-width: 2;
+            fill: none;
+            transition: all 0.3s ease;
+        }
+
+        .flow-line.decision-yes { stroke: #4CAF50; }
+        .flow-line.decision-no { stroke: #f44336; }
+
+        .detail-section { 
+            margin-bottom: 15px; 
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .detail-section:last-child { border-bottom: none; }
+        .detail-label { font-weight: 600; color: #333; margin-bottom: 5px; }
+        .detail-value { color: #666; margin-left: 10px; line-height: 1.4; }
+        .detail-list { list-style: none; margin-left: 10px; margin-top: 8px; }
+        .detail-list li { padding: 4px 0; color: #666; position: relative; padding-left: 20px; line-height: 1.5; }
+        .detail-list li:before { content: '•'; position: absolute; left: 0; color: #764ba2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Content Optimizer Workflow</h1>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-label">Status:</span>
+                    <span id="script-status" class="status-value">Loading...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Last Updated:</span>
+                    <span id="last-updated" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Auto-refresh:</span>
+                    <span class="status-indicator"></span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="workflow-container">
+                <svg id="workflow-canvas" width="100%" height="100%">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="10" 
+                                refX="10" refY="5" orient="auto">
+                            <polygon points="0 0, 10 5, 0 10" fill="#666" />
+                        </marker>
+                    </defs>
+                    <g id="connections"></g>
+                    <g id="nodes"></g>
+                </svg>
+            </div>
+
+            <div class="sidebar">
+                <div class="details-panel">
+                    <h2>Node Details</h2>
+                    <div id="node-details">
+                        <p class="placeholder">Click on a node to view details</p>
+                    </div>
+                </div>
+
+                <div class="metrics-panel">
+                    <h2>Workflow Metrics</h2>
+                    <div class="metric">
+                        <span class="metric-label">Total Nodes:</span>
+                        <span id="total-nodes" class="metric-value">0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Checklists:</span>
+                        <span id="total-checklists" class="metric-value">0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Processing Steps:</span>
+                        <span id="processing-steps" class="metric-value">0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Decision Points:</span>
+                        <span id="decision-points" class="metric-value">0</span>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <h2>Legend</h2>
+                    <div class="legend-item">
+                        <span class="legend-color input"></span>
+                        <span>Input/Output</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color process"></span>
+                        <span>Processing</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color decision"></span>
+                        <span>Decision</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color api"></span>
+                        <span>API Call</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color checklist"></span>
+                        <span>Checklist</span>
+                    </div>
+                </div>
+
+                <div class="voice-assistant-panel">
+                    <h2>Voice Assistant</h2>
+                    <div class="voice-controls">
+                        <button id="voice-btn" class="voice-button">
+                            <span class="voice-icon">🎙️</span>
+                            <span class="voice-text">Explain Workflow</span>
+                        </button>
+                        
+                        <div class="control-group">
+                            <label for="speech-speed">Speed:</label>
+                            <input type="range" id="speech-speed" min="0.5" max="2" step="0.1" value="1">
+                            <span id="speed-value">1.0x</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="tech-level">Technical Level:</label>
+                            <select id="tech-level">
+                                <option value="beginner">Beginner</option>
+                                <option value="intermediate" selected>Intermediate</option>
+                                <option value="advanced">Advanced</option>
+                                <option value="expert">Expert</option>
+                            </select>
+                        </div>
+                        
+                        <div class="voice-status" id="voice-status">
+                            <span class="status-text">Ready</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class WorkflowVisualizer {
+            constructor() {
+                this.canvas = document.getElementById('workflow-canvas');
+                this.nodesGroup = document.getElementById('nodes');
+                this.connectionsGroup = document.getElementById('connections');
+                this.nodeDetails = document.getElementById('node-details');
+                
+                this.nodes = [];
+                this.connections = [];
+                this.selectedNode = null;
+                this.lastWorkflowData = null;
+                
+                this.nodeWidth = 180;
+                this.nodeHeight = 60;
+                
+                this.loadWorkflow();
+                // Poll for updates every 2 seconds
+                setInterval(() => this.loadWorkflow(), 2000);
+            }
+            
+            async loadWorkflow() {
+                try {
+                    const response = await fetch('/workflow.json?' + Date.now());
+                    const data = await response.json();
+                    
+                    // Only update if data has changed
+                    const dataStr = JSON.stringify(data);
+                    if (dataStr !== this.lastWorkflowData) {
+                        this.lastWorkflowData = dataStr;
+                        this.updateWorkflow(data);
+                        this.updateLastUpdated();
+                        document.getElementById('script-status').textContent = 'Connected';
+                    }
+                } catch (error) {
+                    console.error('Failed to load workflow:', error);
+                    document.getElementById('script-status').textContent = 'Error loading';
+                }
+            }
+            
+            updateLastUpdated() {
+                const now = new Date();
+                document.getElementById('last-updated').textContent = now.toLocaleTimeString();
+            }
+            
+            updateWorkflow(workflow) {
+                // Clear existing elements
+                this.nodesGroup.innerHTML = '';
+                this.connectionsGroup.innerHTML = '';
+                this.nodes = [];
+                this.connections = [];
+                
+                // Create gradients for node types
+                this.createGradients();
+                
+                // Create connections first (so they appear behind nodes)
+                workflow.connections.forEach(conn => {
+                    this.createConnection(conn, workflow.nodes);
+                });
+                
+                // Create nodes
+                workflow.nodes.forEach(nodeData => {
+                    this.createNode(nodeData);
+                });
+                
+                // Update metrics
+                this.updateMetrics(workflow);
+            }
+            
+            createGradients() {
+                const existingDefs = this.canvas.querySelector('defs');
+                const gradients = [
+                    { id: 'gradient-input', colors: ['#667eea', '#764ba2'] },
+                    { id: 'gradient-process', colors: ['#4CAF50', '#45a049'] },
+                    { id: 'gradient-decision', colors: ['#FFC107', '#FFA000'] },
+                    { id: 'gradient-api', colors: ['#2196F3', '#1976D2'] },
+                    { id: 'gradient-checklist', colors: ['#9C27B0', '#7B1FA2'] }
+                ];
+                
+                gradients.forEach(({ id, colors }) => {
+                    if (!document.getElementById(id)) {
+                        const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+                        grad.setAttribute('id', id);
+                        grad.setAttribute('x1', '0%');
+                        grad.setAttribute('y1', '0%');
+                        grad.setAttribute('x2', '100%');
+                        grad.setAttribute('y2', '100%');
+                        
+                        const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+                        stop1.setAttribute('offset', '0%');
+                        stop1.setAttribute('style', `stop-color:${colors[0]};stop-opacity:1`);
+                        
+                        const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+                        stop2.setAttribute('offset', '100%');
+                        stop2.setAttribute('style', `stop-color:${colors[1]};stop-opacity:1`);
+                        
+                        grad.appendChild(stop1);
+                        grad.appendChild(stop2);
+                        existingDefs.appendChild(grad);
+                    }
+                });
+            }
+            
+            createNode(nodeData) {
+                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                group.setAttribute('class', 'workflow-node');
+                group.setAttribute('transform', `translate(${nodeData.x}, ${nodeData.y})`);
+                
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('width', this.nodeWidth);
+                rect.setAttribute('height', this.nodeHeight);
+                rect.setAttribute('rx', '8');
+                rect.setAttribute('ry', '8');
+                rect.setAttribute('fill', `url(#gradient-${nodeData.type})`);
+                rect.setAttribute('stroke', 'rgba(0,0,0,0.1)');
+                rect.setAttribute('stroke-width', '2');
+                
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('class', 'node-text');
+                text.setAttribute('x', this.nodeWidth / 2);
+                text.setAttribute('y', this.nodeHeight / 2 - 8);
+                text.textContent = nodeData.label;
+                
+                const subtext = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                subtext.setAttribute('class', 'node-subtext');
+                subtext.setAttribute('x', this.nodeWidth / 2);
+                subtext.setAttribute('y', this.nodeHeight / 2 + 10);
+                subtext.textContent = nodeData.subtext || '';
+                
+                group.appendChild(rect);
+                group.appendChild(text);
+                group.appendChild(subtext);
+                
+                group.addEventListener('click', () => this.selectNode(nodeData));
+                
+                this.nodesGroup.appendChild(group);
+                this.nodes.push({ element: group, data: nodeData });
+            }
+            
+            createConnection(connData, nodes) {
+                const fromNode = nodes.find(n => n.id === connData.from);
+                const toNode = nodes.find(n => n.id === connData.to);
+                
+                if (!fromNode || !toNode) return;
+                
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('class', 'flow-line');
+                
+                const x1 = fromNode.x + this.nodeWidth;
+                const y1 = fromNode.y + this.nodeHeight / 2;
+                const x2 = toNode.x;
+                const y2 = toNode.y + this.nodeHeight / 2;
+                
+                const midX = (x1 + x2) / 2;
+                const d = `M ${x1} ${y1} Q ${midX} ${y1} ${midX} ${(y1 + y2) / 2} T ${x2} ${y2}`;
+                path.setAttribute('d', d);
+                path.setAttribute('marker-end', 'url(#arrowhead)');
+                
+                if (connData.label) {
+                    const labelText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    labelText.setAttribute('x', midX);
+                    labelText.setAttribute('y', (y1 + y2) / 2 - 10);
+                    labelText.setAttribute('text-anchor', 'middle');
+                    labelText.setAttribute('font-size', '12');
+                    labelText.setAttribute('fill', connData.label === 'Yes' ? '#4CAF50' : '#f44336');
+                    labelText.textContent = connData.label;
+                    this.connectionsGroup.appendChild(labelText);
+                    
+                    if (connData.label === 'Yes') {
+                        path.classList.add('decision-yes');
+                    } else if (connData.label === 'No') {
+                        path.classList.add('decision-no');
+                    }
+                }
+                
+                this.connectionsGroup.appendChild(path);
+                this.connections.push({ element: path, data: connData });
+            }
+            
+            selectNode(nodeData) {
+                this.nodes.forEach(node => {
+                    node.element.classList.remove('active');
+                });
+                
+                const selectedElement = this.nodes.find(n => n.data.id === nodeData.id);
+                if (selectedElement) {
+                    selectedElement.element.classList.add('active');
+                }
+                
+                this.selectedNode = nodeData;
+                this.showNodeDetails(nodeData);
+            }
+            
+            showNodeDetails(nodeData) {
+                const details = {
+                    input: {
+                        description: 'Accepts content from Google Docs URL or local file',
+                        details: ['Fetches Google Doc content', 'Supports text and markdown', 'Validates content']
+                    },
+                    process: {
+                        description: 'Processes and transforms content',
+                        details: ['Splits content into chunks', 'Analyzes structure', 'Applies transformations']
+                    },
+                    checklist: {
+                        description: 'Applies quality checks',
+                        details: ['SEO optimization', 'NLP analysis', 'AI pattern detection']
+                    },
+                    decision: {
+                        description: 'Conditional branching',
+                        details: ['Based on flags', 'Determines path', 'Enables features']
+                    },
+                    api: {
+                        description: 'External API integration',
+                        details: ['OpenAI for fixes', 'Web search', 'Async processing']
+                    }
+                };
+                
+                const typeDetails = details[nodeData.type] || { description: 'Node', details: [] };
+                
+                let html = `
+                    <div class="detail-section">
+                        <div class="detail-label">Node: ${nodeData.label}</div>
+                        <div class="detail-value">${nodeData.subtext || ''}</div>
+                    </div>
+                    <div class="detail-section">
+                        <div class="detail-label">Type: ${nodeData.type.toUpperCase()}</div>
+                        <div class="detail-value">${typeDetails.description}</div>
+                    </div>
+                `;
+                
+                if (typeDetails.details.length > 0) {
+                    html += `
+                        <div class="detail-section">
+                            <div class="detail-label">Features:</div>
+                            <ul class="detail-list">
+                                ${typeDetails.details.map(d => `<li>${d}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+                this.nodeDetails.innerHTML = html;
+            }
+            
+            updateMetrics(workflow) {
+                document.getElementById('total-nodes').textContent = workflow.nodes.length;
+                document.getElementById('total-checklists').textContent = 
+                    workflow.nodes.filter(n => n.type === 'checklist').length;
+                document.getElementById('processing-steps').textContent = 
+                    workflow.nodes.filter(n => n.type === 'process').length;
+                document.getElementById('decision-points').textContent = 
+                    workflow.nodes.filter(n => n.type === 'decision').length;
+            }
+        }
+
+        // Voice Assistant Class
+        class VoiceAssistant {
+            constructor(visualizer) {
+                this.visualizer = visualizer;
+                this.synthesis = window.speechSynthesis;
+                this.isSpeaking = false;
+                this.currentUtterance = null;
+                
+                this.initControls();
+            }
+            
+            initControls() {
+                this.voiceBtn = document.getElementById('voice-btn');
+                this.speedSlider = document.getElementById('speech-speed');
+                this.speedValue = document.getElementById('speed-value');
+                this.techLevel = document.getElementById('tech-level');
+                this.voiceStatus = document.getElementById('voice-status');
+                
+                this.voiceBtn.addEventListener('click', () => this.toggleSpeech());
+                
+                this.speedSlider.addEventListener('input', (e) => {
+                    this.speedValue.textContent = `${e.target.value}x`;
+                });
+                
+                this.techLevel.addEventListener('change', () => {
+                    if (this.isSpeaking) {
+                        this.stopSpeech();
+                    }
+                });
+            }
+            
+            generateExplanation() {
+                const level = this.techLevel.value;
+                const workflow = this.visualizer.workflowData;
+                
+                if (!workflow || !workflow.nodes || workflow.nodes.length === 0) {
+                    return "No workflow data is currently loaded. Please wait for the workflow to be parsed.";
+                }
+                
+                const nodeCount = workflow.nodes.length;
+                const checklistCount = workflow.nodes.filter(n => n.type === 'checklist').length;
+                const apiCount = workflow.nodes.filter(n => n.type === 'api').length;
+                const processingCount = workflow.nodes.filter(n => n.type === 'process').length;
+                
+                let explanation = "";
+                
+                switch(level) {
+                    case 'beginner':
+                        explanation = `Welcome to the Content Optimizer Workflow! This is a visual map of how your content gets improved. 
+                        
+                        Think of it like a recipe with ${nodeCount} steps. The workflow starts when you provide an article or content that needs optimization.
+                        
+                        First, the system reads your content and breaks it into smaller, manageable pieces. Then, it goes through ${checklistCount} quality checks - these are like spell-checkers but much smarter. They look for things like clarity, accuracy, and readability.
+                        
+                        When the system finds issues, it uses artificial intelligence to fix them. There are ${apiCount} points where it connects to AI services to get help with improvements.
+                        
+                        The workflow has ${processingCount} processing steps where your content gets analyzed and enhanced. Each purple box is where data comes in or goes out. Green boxes are where the actual work happens. Yellow diamonds are decision points where the system chooses what to do next.
+                        
+                        Finally, your improved content is saved and ready to use. The whole process is automatic and ensures your content meets high quality standards.`;
+                        break;
+                        
+                    case 'intermediate':
+                        explanation = `This workflow visualizes the Content Audit Agent version 4, containing ${nodeCount} distinct operations.
+                        
+                        The process begins with input parsing and article loading. The content is then segmented into chunks for parallel processing.
+                        
+                        The system employs ${checklistCount} validation checklists covering grammar, style, readability, factual accuracy, and SEO optimization. Each checklist contains specific rules and criteria that content must satisfy.
+                        
+                        Processing involves ${processingCount} transformation steps including chunk analysis, AI-powered corrections using GPT models, and content merging. The workflow includes ${apiCount} API integration points for OpenAI services and web search capabilities.
+                        
+                        Key decision nodes determine whether to apply fixes, use fallback options, or skip certain optimizations based on command-line flags. The workflow supports both full article processing and chunk-based incremental improvements.
+                        
+                        Post-processing steps include formatting cleanup, metadata extraction, and final validation before outputting the optimized content.`;
+                        break;
+                        
+                    case 'advanced':
+                        explanation = `The Content Audit Agent v4 workflow implements a ${nodeCount}-node directed acyclic graph for content optimization.
+                        
+                        Architecture: The system uses AST-based parsing to extract workflow semantics from Python source. It identifies ${checklistCount} JSON-schema validated checklists loaded dynamically at runtime.
+                        
+                        Processing pipeline: Input undergoes tokenization and chunk segmentation using configurable boundaries. Each chunk processes through ${processingCount} transformation functions including analyze_chunk, fix_chunk_with_ai, and merge_chunks methods.
+                        
+                        API integrations: ${apiCount} external service calls integrate OpenAI's GPT-4 for content generation and web search APIs for fact-checking. Rate limiting and retry logic handle API failures gracefully.
+                        
+                        Control flow: Decision nodes implement conditional execution based on CLI arguments like --no-fixes and --use-search. The workflow supports both synchronous and asynchronous execution patterns.
+                        
+                        Optimization strategies include caching parsed checklists, batching API requests, and implementing progressive enhancement patterns. Post-processing applies regex-based cleanup, markdown formatting, and semantic HTML generation.
+                        
+                        The visualization updates via WebSocket connections, monitoring file system events for real-time workflow modifications.`;
+                        break;
+                        
+                    case 'expert':
+                        explanation = `Content Audit Agent v4: ${nodeCount}-node workflow graph. AST parsing extracts method definitions, control flow, and data dependencies.
+                        
+                        Node taxonomy: Input/Output (I/O boundaries), Process (pure transformations), Decision (branching logic), API (external service calls), Checklist (${checklistCount} JSON-schema validators).
+                        
+                        Implementation: Python 3.x, asyncio-compatible, ${processingCount} processing lambdas. Chunk boundaries via regex patterns. State management through class instance variables.
+                        
+                        API layer: ${apiCount} integration points. OpenAI GPT-4 (completion API), retry exponential backoff, token optimization. Web search fallback for fact-checking.
+                        
+                        Optimization: O(n) chunk processing, parallel validation, memoized checklist parsing. WebSocket server: FastAPI/Uvicorn, file watcher via watchdog, message passing through JSON-RPC.
+                        
+                        Graph properties: Topological ordering ensures dependency resolution. Critical path analysis identifies optimization bottlenecks. Node positioning via force-directed layout algorithm.
+                        
+                        Real-time updates: inotify/FSEvents monitoring, differential updates, 100ms debounce. Client-side rendering: SVG, D3-inspired transitions, 60fps animation targets.`;
+                        break;
+                }
+                
+                return explanation;
+            }
+            
+            toggleSpeech() {
+                if (this.isSpeaking) {
+                    this.stopSpeech();
+                } else {
+                    this.startSpeech();
+                }
+            }
+            
+            startSpeech() {
+                const text = this.generateExplanation();
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                utterance.rate = parseFloat(this.speedSlider.value);
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                
+                const voices = this.synthesis.getVoices();
+                const preferredVoice = voices.find(voice => 
+                    voice.name.includes('Samantha') || 
+                    voice.name.includes('Alex') || 
+                    voice.name.includes('Google') ||
+                    voice.lang.startsWith('en')
+                );
+                
+                if (preferredVoice) {
+                    utterance.voice = preferredVoice;
+                }
+                
+                utterance.onstart = () => {
+                    this.isSpeaking = true;
+                    this.updateUI('speaking');
+                };
+                
+                utterance.onend = () => {
+                    this.isSpeaking = false;
+                    this.updateUI('ready');
+                };
+                
+                utterance.onerror = (event) => {
+                    console.error('Speech synthesis error:', event);
+                    this.isSpeaking = false;
+                    this.updateUI('error');
+                    setTimeout(() => this.updateUI('ready'), 3000);
+                };
+                
+                this.currentUtterance = utterance;
+                this.synthesis.speak(utterance);
+            }
+            
+            stopSpeech() {
+                if (this.synthesis.speaking) {
+                    this.synthesis.cancel();
+                }
+                this.isSpeaking = false;
+                this.updateUI('ready');
+            }
+            
+            updateUI(status) {
+                const statusText = this.voiceStatus.querySelector('.status-text');
+                const voiceText = this.voiceBtn.querySelector('.voice-text');
+                const voiceIcon = this.voiceBtn.querySelector('.voice-icon');
+                
+                switch(status) {
+                    case 'speaking':
+                        statusText.textContent = 'Speaking...';
+                        voiceText.textContent = 'Stop';
+                        voiceIcon.textContent = '⏹️';
+                        this.voiceBtn.classList.add('speaking');
+                        this.voiceStatus.classList.add('active');
+                        break;
+                    case 'ready':
+                        statusText.textContent = 'Ready';
+                        voiceText.textContent = 'Explain Workflow';
+                        voiceIcon.textContent = '🎙️';
+                        this.voiceBtn.classList.remove('speaking');
+                        this.voiceStatus.classList.remove('active', 'error');
+                        break;
+                    case 'error':
+                        statusText.textContent = 'Error occurred';
+                        this.voiceStatus.classList.add('error');
+                        break;
+                }
+            }
+        }
+
+        // Initialize when ready
+        document.addEventListener('DOMContentLoaded', () => {
+            const visualizer = new WorkflowVisualizer();
+            window.visualizer = visualizer;
+            window.voiceAssistant = new VoiceAssistant(visualizer);
+        });
+    </script>
+</body>
+</html>

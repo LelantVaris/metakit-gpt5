@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Workflow Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 300px;
+        }
+        
+        .info-panel h1 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .info-panel p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .node-tooltip {
+            position: absolute;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: none;
+            pointer-events: none;
+            z-index: 100;
+            max-width: 300px;
+        }
+        
+        .node-tooltip.visible {
+            display: block;
+        }
+        
+        .node-tooltip h3 {
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #333;
+        }
+        
+        .node-tooltip p {
+            font-size: 12px;
+            color: #666;
+            margin: 4px 0;
+        }
+        
+        /* Enhanced Detail Panel */
+        .detail-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 400px;
+            max-height: 90vh;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            display: none;
+            overflow-y: auto;
+            z-index: 200;
+        }
+        
+        .detail-panel.visible {
+            display: block;
+        }
+        
+        .detail-header {
+            padding: 20px;
+            border-bottom: 2px solid #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .detail-header h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .detail-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .detail-content {
+            padding: 20px;
+        }
+        
+        .detail-section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .detail-section:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-section h3 {
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .detail-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .detail-list li {
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+            font-size: 13px;
+            color: #555;
+        }
+        
+        .detail-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+        }
+        
+        .example-box {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        
+        .example-box h4 {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        
+        .example-box p {
+            font-size: 12px;
+            line-height: 1.5;
+            margin: 6px 0;
+        }
+        
+        .example-before {
+            color: #d32f2f;
+            border-left: 3px solid #d32f2f;
+            padding-left: 10px;
+        }
+        
+        .example-after {
+            color: #388e3c;
+            border-left: 3px solid #388e3c;
+            padding-left: 10px;
+        }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .metric-item {
+            background: #f9f9f9;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .metric-label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+        
+        .metric-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Simulation Progress Bar */
+        .simulation-progress {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .simulation-progress.active {
+            display: block;
+        }
+        
+        .simulation-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 1.5s ease;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            background: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div class="info-panel">
+        <h1>Workflow Visualizer 3D</h1>
+        <p><strong>Controls:</strong></p>
+        <p>• Left click + drag to rotate</p>
+        <p>• Right click + drag to pan</p>
+        <p>• Scroll to zoom</p>
+        <p>• Click nodes for details</p>
+    </div>
+    
+    <div class="controls">
+        <button class="control-btn" onclick="resetCamera()">Reset View</button>
+        <button class="control-btn" onclick="toggleRotation()">Toggle Rotation</button>
+        <button class="control-btn" onclick="focusOnFixes()">Focus on AI Fixes</button>
+        <button class="control-btn" onclick="startSimulation()" style="background: #4CAF50; color: white;">▶ Simulate</button>
+        <button class="control-btn" onclick="toggleParticles()">Particles</button>
+    </div>
+    
+    <div class="view-switcher" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; background: rgba(255,255,255,0.95); padding: 10px; border-radius: 8px;">
+        <button class="view-btn" onclick="switchView('workflow', event)" style="padding: 8px 16px; border: none; background: #667eea; color: white; border-radius: 4px; cursor: pointer;">Workflow</button>
+        <button class="view-btn" onclick="switchView('fixes', event)" style="padding: 8px 16px; border: none; background: white; color: #667eea; border-radius: 4px; cursor: pointer;">AI Fixes</button>
+        <button class="view-btn" onclick="switchView('checklists', event)" style="padding: 8px 16px; border: none; background: white; color: #667eea; border-radius: 4px; cursor: pointer;">Checklists</button>
+        <button class="view-btn" onclick="switchView('master', event)" style="padding: 8px 16px; border: none; background: white; color: #667eea; border-radius: 4px; cursor: pointer;">Master (85)</button>
+        <button class="view-btn" onclick="switchView('metrics', event)" style="padding: 8px 16px; border: none; background: white; color: #667eea; border-radius: 4px; cursor: pointer;">Metrics</button>
+    </div>
+    
+    <div class="node-tooltip" id="tooltip"></div>
+    
+    <!-- Simulation Progress Bar -->
+    <div class="simulation-progress" id="simulationProgress">
+        <div class="simulation-progress-bar" id="simulationProgressBar"></div>
+    </div>
+    
+    <!-- Enhanced Detail Panel -->
+    <div class="detail-panel" id="detailPanel">
+        <button class="close-btn" onclick="closeDetailPanel()">×</button>
+        <div class="detail-header">
+            <h2 id="detailTitle">Node Details</h2>
+            <p id="detailSubtitle">Click for information</p>
+        </div>
+        <div class="detail-content" id="detailContent">
+            <!-- Content will be dynamically inserted here -->
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="checklist-data.js"></script>
+    <script src="workflow-3d.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/juliankreth/Documents/Metakit/metakit-gpt5/workflow-visualizer/server.py", line 13, in <module>
+    from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+ModuleNotFoundError: No module named 'fastapi'

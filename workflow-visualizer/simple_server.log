@@ -1,0 +1,23 @@
+==================================================
+WORKFLOW VISUALIZER - Simple Server
+==================================================
+Script monitored: /Users/juliankreth/Documents/Metakit/metakit-gpt5/article-optimizer/content_audit_agent_v4.py
+Server port: 8002
+
+Updated workflow.json at 00:32:11
+✓ File watcher started
+Traceback (most recent call last):
+  File "/Users/juliankreth/Documents/Metakit/metakit-gpt5/workflow-visualizer/simple_server.py", line 180, in <module>
+    main()
+    ~~~~^^
+  File "/Users/juliankreth/Documents/Metakit/metakit-gpt5/workflow-visualizer/simple_server.py", line 164, in main
+    with socketserver.TCPServer(("", PORT), CustomHTTPRequestHandler) as httpd:
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.3/Frameworks/Python.framework/Versions/3.13/lib/python3.13/socketserver.py", line 457, in __init__
+    self.server_bind()
+    ~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.3/Frameworks/Python.framework/Versions/3.13/lib/python3.13/socketserver.py", line 478, in server_bind
+    self.socket.bind(self.server_address)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 48] Address already in use
+Updated workflow.json at 00:32:11

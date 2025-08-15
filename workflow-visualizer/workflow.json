@@ -1,0 +1,286 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "type": "input",
+      "label": "Input Content",
+      "subtext": "Google Doc / File",
+      "x": 100,
+      "y": 100
+    },
+    {
+      "id": "load-checklists",
+      "type": "checklist",
+      "label": "Load Checklists",
+      "subtext": "5 checklists",
+      "x": 100,
+      "y": 200
+    },
+    {
+      "id": "split-chunks",
+      "type": "process",
+      "label": "Split into Chunks",
+      "subtext": "~400 words each",
+      "x": 350,
+      "y": 100
+    },
+    {
+      "id": "analyze-loop",
+      "type": "process",
+      "label": "Analyze Chunks",
+      "subtext": "For each chunk",
+      "x": 600,
+      "y": 100
+    },
+    {
+      "id": "check-seo",
+      "type": "checklist",
+      "label": "SEO Checks",
+      "subtext": "Keywords, titles",
+      "x": 850,
+      "y": 50
+    },
+    {
+      "id": "check-nlp",
+      "type": "checklist",
+      "label": "NLP Checks",
+      "subtext": "Readability",
+      "x": 850,
+      "y": 150
+    },
+    {
+      "id": "check-ai",
+      "type": "checklist",
+      "label": "AI Patterns",
+      "subtext": "Content quality",
+      "x": 850,
+      "y": 250
+    },
+    {
+      "id": "check-master",
+      "type": "checklist",
+      "label": "Master Checks",
+      "subtext": "Overall quality",
+      "x": 1050,
+      "y": 100
+    },
+    {
+      "id": "check-pvod",
+      "type": "checklist",
+      "label": "PVOD Checks",
+      "subtext": "Value & depth",
+      "x": 1050,
+      "y": 200
+    },
+    {
+      "id": "decision-fix",
+      "type": "decision",
+      "label": "Fix Issues?",
+      "subtext": "--fix flag",
+      "x": 600,
+      "y": 350
+    },
+    {
+      "id": "fix-issues",
+      "type": "api",
+      "label": "Fix with OpenAI",
+      "subtext": "API calls",
+      "x": 850,
+      "y": 350
+    },
+    {
+      "id": "decision-websearch",
+      "type": "decision",
+      "label": "Web Search?",
+      "subtext": "--web-search",
+      "x": 850,
+      "y": 450
+    },
+    {
+      "id": "web-search",
+      "type": "api",
+      "label": "Search Web",
+      "subtext": "Fact checking",
+      "x": 1100,
+      "y": 450
+    },
+    {
+      "id": "postprocess",
+      "type": "process",
+      "label": "Postprocess",
+      "subtext": "Clean & normalize",
+      "x": 600,
+      "y": 550
+    },
+    {
+      "id": "strip-scaffold",
+      "type": "process",
+      "label": "Strip Scaffolding",
+      "subtext": "Remove meta",
+      "x": 850,
+      "y": 550
+    },
+    {
+      "id": "clean-links",
+      "type": "process",
+      "label": "Clean Links",
+      "subtext": "Remove UTM",
+      "x": 1050,
+      "y": 550
+    },
+    {
+      "id": "fix-code",
+      "type": "process",
+      "label": "Fix Code Fences",
+      "subtext": "Normalize",
+      "x": 850,
+      "y": 650
+    },
+    {
+      "id": "dedupe",
+      "type": "process",
+      "label": "Deduplicate",
+      "subtext": "Remove repeats",
+      "x": 1050,
+      "y": 650
+    },
+    {
+      "id": "generate-report",
+      "type": "process",
+      "label": "Generate Report",
+      "subtext": "Audit results",
+      "x": 350,
+      "y": 750
+    },
+    {
+      "id": "generate-mdx",
+      "type": "process",
+      "label": "Generate MDX",
+      "subtext": "If requested",
+      "x": 600,
+      "y": 750
+    },
+    {
+      "id": "output",
+      "type": "input",
+      "label": "Output",
+      "subtext": "Report & Fixed content",
+      "x": 850,
+      "y": 750
+    }
+  ],
+  "connections": [
+    {
+      "from": "start",
+      "to": "load-checklists"
+    },
+    {
+      "from": "start",
+      "to": "split-chunks"
+    },
+    {
+      "from": "split-chunks",
+      "to": "analyze-loop"
+    },
+    {
+      "from": "analyze-loop",
+      "to": "check-seo"
+    },
+    {
+      "from": "analyze-loop",
+      "to": "check-nlp"
+    },
+    {
+      "from": "analyze-loop",
+      "to": "check-ai"
+    },
+    {
+      "from": "analyze-loop",
+      "to": "check-master"
+    },
+    {
+      "from": "analyze-loop",
+      "to": "check-pvod"
+    },
+    {
+      "from": "check-seo",
+      "to": "decision-fix"
+    },
+    {
+      "from": "check-nlp",
+      "to": "decision-fix"
+    },
+    {
+      "from": "check-ai",
+      "to": "decision-fix"
+    },
+    {
+      "from": "check-master",
+      "to": "decision-fix"
+    },
+    {
+      "from": "check-pvod",
+      "to": "decision-fix"
+    },
+    {
+      "from": "decision-fix",
+      "to": "fix-issues",
+      "label": "Yes"
+    },
+    {
+      "from": "decision-fix",
+      "to": "postprocess",
+      "label": "No"
+    },
+    {
+      "from": "fix-issues",
+      "to": "decision-websearch"
+    },
+    {
+      "from": "decision-websearch",
+      "to": "web-search",
+      "label": "Yes"
+    },
+    {
+      "from": "decision-websearch",
+      "to": "postprocess",
+      "label": "No"
+    },
+    {
+      "from": "web-search",
+      "to": "postprocess"
+    },
+    {
+      "from": "postprocess",
+      "to": "strip-scaffold"
+    },
+    {
+      "from": "strip-scaffold",
+      "to": "clean-links"
+    },
+    {
+      "from": "clean-links",
+      "to": "fix-code"
+    },
+    {
+      "from": "fix-code",
+      "to": "dedupe"
+    },
+    {
+      "from": "dedupe",
+      "to": "generate-report"
+    },
+    {
+      "from": "generate-report",
+      "to": "generate-mdx"
+    },
+    {
+      "from": "generate-mdx",
+      "to": "output"
+    },
+    {
+      "from": "load-checklists",
+      "to": "analyze-loop"
+    }
+  ]
+}
